@@ -1,2 +1,2 @@
-# MyProject
+
 Study For Life
