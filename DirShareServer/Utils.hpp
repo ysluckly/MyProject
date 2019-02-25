@@ -48,7 +48,7 @@ std::unordered_map<std::string, std::string> g_file_type = {
   {"jpg",  "image/jpeg"},
   {"zip",  "application/zip"},
   {"mp3",  "audio/mpeg"},
-  {"unknow","apllication/octet-stream"}
+  {"unknow","application/octet-stream"}
 };
 
 //公用接口工具
@@ -480,7 +480,8 @@ public:
     //新添加上传功能的显示信息
     
     //form表单：表明这是一个上传，这是我要提交的一个数据，
-    //action：这个上传操作请求的是是服务端哪个cgi程序，因为提交的时候可以用post。也可以get，但是我们用sgi处理，所以告诉是那个cgi程序，也就是表单执行的动作，或者执行程序的路径，
+    //action：这个上传操作请求的是是服务端哪个cgi程序，因为提交的时候可以用post。
+    //也可以get，但是我们用sgi处理，所以告诉是那个cgi程序，也就是表单执行的动作，或者执行程序的路径，
     //method：方法在上传选择post，较安全，数据在地址栏不显示的，
     //还必须结合enctypa，才是上传文件
 
@@ -496,26 +497,26 @@ public:
     rsp_body += "<ol>";
     SendChunkData(rsp_body);
 
-      //获取目录下的每一个文件，组织html响应信息，chunked传输:每次发送数据前，都应该告诉对方，发送的数据有多长 
-      //应该先判断，但是一般都是1.1版本，所以此处不用
+    //获取目录下的每一个文件，组织html响应信息，chunked传输:每次发送数据前，都应该告诉对方，发送的数据有多长 
+    //应该先判断，但是一般都是1.1版本，所以此处不用
   
-      //浏览信息 scandir(1,path,2,结构体dirent类型的三级指针（指向目录下每一个文件的信息），\
-      //3,函数指针：fileter可自己定义，返回值int，0：不过虑，这个文件存储，保存到三级指针里，1，过滤不存储，即不获取，\
-      //4，排序，主要两种（alphasort,versionsort,）) ,返回值为浏览的文件数量，
-      //readdir 结构里有这个结构体，结构体有不带路径的文件名，通过文件名加上前面路径，构成全路径文件，\
-      //通过stat获取到信息：大小，修改时间，文件类型，组织完后，进行返回。
+    //浏览信息 scandir(1,path,2,结构体dirent类型的三级指针（指向目录下每一个文件的信息），\
+    //3,函数指针：fileter可自己定义，返回值int，0：不过虑，这个文件存储，保存到三级指针里，1，过滤不存储，即不获取，\
+    //4，排序，主要两种（alphasort,versionsort,）) ,返回值为浏览的文件数量，
+    //readdir 结构里有这个结构体，结构体有不带路径的文件名，通过文件名加上前面路径，构成全路径文件，\
+    //通过stat获取到信息：大小，修改时间，文件类型，组织完后，进行返回。
       
-      //int filter（struct *dirent） //过滤 .目录
-      //{
-      // if(strcmp(dirent->d_name, "."))
-      // {
-      //  return 1;
-      // }
-      // else 
-      // {
-      // return 0;
-      // }
-      //}
+    //int filter（struct *dirent） //过滤 .目录
+    //{
+    // if(strcmp(dirent->d_name, "."))
+    // {
+    //  return 1;
+    // }
+    // else 
+    // {
+    // return 0;
+    // }
+    //}
       
     struct dirent **p_dirent = NULL;  //为了给二级指针存储内存，出现三级指针
     //获取目录下的每一个文件，组织出html信息，chunk传输
@@ -566,7 +567,7 @@ public:
     //头部
     std::string rsp_header;
     rsp_header = info._version + " 200 OK\r\n";
-    rsp_header += "Content-Type: " + _type_mine + "\r\n"; //决定服务端如何处理响应的数据
+    rsp_header += "Content-Type: " +_type_mine + "\r\n"; //决定服务端如何处理响应的数据
     rsp_header += "Connection: close\r\n"; //短链接
     rsp_header += "Content-Length: " + _fsize + "\r\n";
     rsp_header += "ETag: "+ _etag + "\r\n";
@@ -592,8 +593,8 @@ public:
     {
       //不能用char* ，因为可能传输的就是多个0，这样会导致对端收不到，会认为没有信息了，就关闭了，
       //导致程序会崩溃，（对方关闭链接，send会收到sigpipe信号，触发终止进程，）所以需要忽略信号
-     // buf[rlen] = '\0';
-     // SendData(buf);
+      // buf[rlen] = '\0';
+      // SendData(buf);
      send(_cli_sock,buf,rlen,0);
     }
   
@@ -673,17 +674,28 @@ public:
      {
        char buf[MAX_BUFF] = {0};
        int64_t content_len = Utils::StrToDigit(it->second);
-       int rlen = recv(_cli_sock,buf,MAX_BUFF,0);
+
+       LOG("content_len:[%ld]\n",content_len);
+
+       int tlen = 0;
+       while(tlen < content_len)
+       {
+         //避免接受数据可能会粘包，决定一个字符都不多接受
+          int len = MAX_BUFF > (content_len - tlen)? (content_len - tlen) : MAX_BUFF; 
+          int rlen = recv(_cli_sock,buf,len,0);
        
-       if(rlen <= 0)
-       {
-         //响应错误给客户端
-        // info._err_code = "";
-         return false;
-       }
-       if(write(in[1], buf, rlen) < 0)
-       {
-         return false;
+          if(rlen <= 0)
+          {
+          //响应错误给客户端
+          // info._err_code = "";
+          return false;
+          }
+          if(write(in[1], buf, rlen) < 0)
+          {
+            return false;
+          }
+
+          tlen += rlen;
        }
      }
 
