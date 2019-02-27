@@ -1,10 +1,7 @@
 .PHONY:all 
-iall:httpserver upload
+all:httpserver 
 httpserver:HttpServer.cpp
 	g++ $^ -o $@ -pthread -std=c++11
-
-upload:UpLoad.cpp 
-	g++ -g $^ -o $@ -std=c++11 
 
 .PHONY:clean
 clean:
