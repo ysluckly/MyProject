@@ -1,5 +1,5 @@
 .PHONY:all 
-iall:httpserver upload
+all:httpserver upload
 httpserver:HttpServer.cpp
 	g++ $^ -o $@ -pthread -std=c++11
 
