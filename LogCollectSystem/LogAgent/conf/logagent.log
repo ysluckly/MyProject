@@ -1,0 +1,3 @@
+2019/12/13 11:19:56.984 [D]  LoadConf success ! confi:&{debug ./conf/logagent.log 100 [{E:/Go/Go_IDE/Project/src/Kafka_Zookeeper/LogAgent/conf/logcollect.log nginx_log}]}
+2019/12/13 11:19:56.984 [D]  InitTialize  success
+2019/12/13 11:19:56.985 [I]  Program exited
